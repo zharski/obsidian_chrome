@@ -2,41 +2,65 @@
 // It then loads the libraries required and runs the script.
 // The script copies the content and adds it to your clipboard
 
-chrome.browserAction.onClicked.addListener(function (tab) {
-    chrome.tabs.executeScript(null, { file: "lib/jquery.js" }, async function() { // https://code.jquery.com/jquery-3.5.1.min.js
-
-        // Get the obsidianNoteFormat and selectionIntoDescription from the settings; 
-        // defaulting to `[{title}]({url})` and FALSE respectively
-        var defaultClippingOptions = {
-            obsidianNoteFormat: "[{title}]({url})",
-            selectionIntoDescription: false,
-        }
+chrome.action.onClicked.addListener(async (tab) => {
+    chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['lib/jquery.js']}); //https://code.jquery.com/jquery-3.5.1.min.js
     
-        async function getFromStorage(key) {
-            return new Promise((resolve, reject) => {
-                chrome.storage.sync.get(key, resolve);
-            })
-        }
+    // defaulting to `[{title}]({url})` and FALSE respectively
+    var defaultClippingOptions = {
+        obsidianNoteFormat: "[{title}]({url})",
+        selectionIntoDescription: false,
+    }
 
-        var clippingOptions = await getFromStorage(defaultClippingOptions)
+    var clippingOptions = await getFromStorage(defaultClippingOptions)
 
-        const obsidianNoteFormat = clippingOptions.obsidianNoteFormat;
-        const selectionIntoDescription = clippingOptions.selectionIntoDescription;
-
-        chrome.runtime.onMessage.addListener(function listener(result) {
-            // Remove listener to prevent trigger multiple times
-            chrome.runtime.onMessage.removeListener(listener);
-
-            console.log(result)
-
-            var noteName = result[0]
-            var note = encodeURIComponent(result[1])
-
-            console.log(noteName, note)
-        });
-
-        chrome.tabs.executeScript(tab.id, {file: 'copy.js'}, () => {
-            console.log("copying... " + tab.id)
-        })
-    });
+    var result = await chrome.scripting.executeScript({ target: { tabId: tab.id }, function:formatNote, args: [clippingOptions]});
+    var note = result[0].result
+    
+    chrome.scripting.executeScript({ target: { tabId: tab.id }, function:copyToClipboard, args: [note]});
+    chrome.runtime.sendMessage([note])
 });
+
+function formatNote(clippingOptions){
+    var title = document.title.replace(/\//g, '')
+    var url = window.location.href
+    var selection = document.getSelection()
+
+    console.log("title: " + title)
+    console.log("url: " + url)
+    console.log("selection: " + selection)
+
+    // Replace the placeholders: (with regex so multiples are replaced as well..)
+    var note = clippingOptions.obsidianNoteFormat
+    note = note.replace(/{clip}/g, selection)
+    note = note.replace(/{url}/g, url)
+    note = note.replace(/{title}/g, title)
+
+    console.log("note: " + note)
+    return note
+}
+
+function copyToClipboard(note) {
+    console.log("note: " + note)
+    // Add to a note, prepare to copy to the clipboard
+    // Create text-input to copy from:
+    var copyFrom = $('<textarea/>');
+
+    // Create text to copy and paste in the textarea
+    copyFrom.text(note);
+    $('body').append(copyFrom);
+
+    // Select & copy the content
+    copyFrom.select();
+    document.execCommand('copy');
+    
+    // Remove textarea
+    copyFrom.remove();
+    chrome.runtime.sendMessage([note])
+}
+
+// Get the obsidianNoteFormat and selectionIntoDescription from storage; 
+async function getFromStorage(key) {
+    return new Promise((resolve, reject) => {
+        chrome.storage.sync.get(key, resolve);
+    })
+}
