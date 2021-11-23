@@ -17,8 +17,20 @@ chrome.action.onClicked.addListener(async (tab) => {
     var note = result[0].result
     
     chrome.scripting.executeScript({ target: { tabId: tab.id }, function:copyToClipboard, args: [note]});
-    chrome.runtime.sendMessage([note])
+
+    sendNotification('Your note has been copied!')
 });
+
+function sendNotification(message){
+    var opt = {
+        type: 'basic',
+        title: 'Obsidian',
+        message: message,
+        priority: 1,
+        iconUrl:'icons/favicon-128x128.png'
+    };
+    chrome.notifications.create('obsidian', opt);
+}
 
 function formatNote(clippingOptions){
     var title = document.title.replace(/\//g, '')
@@ -35,7 +47,6 @@ function formatNote(clippingOptions){
     note = note.replace(/{url}/g, url)
     note = note.replace(/{title}/g, title)
 
-    console.log("note: " + note)
     return note
 }
 
