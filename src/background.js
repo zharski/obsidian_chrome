@@ -11,14 +11,25 @@ chrome.action.onClicked.addListener(async (tab) => {
         selectionIntoDescription: false,
     }
 
+    //extracting options from storage
     var clippingOptions = await getFromStorage(defaultClippingOptions)
 
-    var result = await chrome.scripting.executeScript({ target: { tabId: tab.id }, function:formatNote, args: [clippingOptions]});
-    var note = result[0].result
-    
-    chrome.scripting.executeScript({ target: { tabId: tab.id }, function:copyToClipboard, args: [note]});
+    await chrome.scripting.executeScript({ target: { tabId: tab.id }, function:formatNote, args: [clippingOptions]},
+        (injectionResults) => {
+            if (result[0].result) {
+                //Obsidian Note is formated in result of formatNote() function execution
+                var note = result[0].result
 
-    sendNotification('Your note has been copied!')
+                // Copying to clipboard and sending notification to a user
+                chrome.scripting.executeScript({ target: { tabId: tab.id }, function:copyToClipboard, args: [note]})
+                sendNotification('Your note has been copied!')
+
+                //write directly into the obsidian file
+                    //file path == if file exsits return path, otherwise create a new file and return path to a new file
+                    //write note into the file
+
+            }
+        });
 });
 
 function sendNotification(message){
@@ -50,8 +61,8 @@ function formatNote(clippingOptions){
     return note
 }
 
+//Workaround to put obsidian note into the clipboard via temporary text area and "copy" comand. 
 function copyToClipboard(note) {
-    console.log("note: " + note)
     // Add to a note, prepare to copy to the clipboard
     // Create text-input to copy from:
     var copyFrom = $('<textarea/>');
@@ -66,7 +77,6 @@ function copyToClipboard(note) {
     
     // Remove textarea
     copyFrom.remove();
-    chrome.runtime.sendMessage([note])
 }
 
 // Get the obsidianNoteFormat and selectionIntoDescription from storage; 
