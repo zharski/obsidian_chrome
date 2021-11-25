@@ -16,13 +16,16 @@ chrome.action.onClicked.addListener(async (tab) => {
 
     await chrome.scripting.executeScript({ target: { tabId: tab.id }, function:formatNote, args: [clippingOptions]},
         (injectionResults) => {
-            if (result[0].result) {
+            if (injectionResults[0].result) {
                 //Obsidian Note is formated in result of formatNote() function execution
-                var note = result[0].result
+                var note = injectionResults[0].result
 
                 // Copying to clipboard and sending notification to a user
                 chrome.scripting.executeScript({ target: { tabId: tab.id }, function:copyToClipboard, args: [note]})
-                sendNotification('Your note has been copied!')
+                    .then(sendNotification('Your note has been copied!'))
+                    .catch(err => {
+                        console.log('Writing to clipboard', err);
+                    })
 
                 //write directly into the obsidian file
                     //file path == if file exsits return path, otherwise create a new file and return path to a new file
@@ -61,22 +64,9 @@ function formatNote(clippingOptions){
     return note
 }
 
-//Workaround to put obsidian note into the clipboard via temporary text area and "copy" comand. 
+//Using navigator clipboard API: https://developer.mozilla.org/en-US/docs/Web/API/Clipboard/writeText 
 function copyToClipboard(note) {
-    // Add to a note, prepare to copy to the clipboard
-    // Create text-input to copy from:
-    var copyFrom = $('<textarea/>');
-
-    // Create text to copy and paste in the textarea
-    copyFrom.text(note);
-    $('body').append(copyFrom);
-
-    // Select & copy the content
-    copyFrom.select();
-    document.execCommand('copy');
-    
-    // Remove textarea
-    copyFrom.remove();
+    navigator.clipboard.writeText(note)
 }
 
 // Get the obsidianNoteFormat and selectionIntoDescription from storage; 
