@@ -30,7 +30,6 @@ chrome.action.onClicked.addListener(async (tab) => {
                 //write directly into the obsidian file
                     //file path == if file exsits return path, otherwise create a new file and return path to a new file
                     //write note into the file
-
             }
         });
 });
@@ -48,7 +47,7 @@ function sendNotification(message){
 
 function formatNote(clippingOptions){
     var title = document.title.replace(/\//g, '')
-    var url = window.location.href
+    var url = window.location.origin + window.location.pathname //workaround allows to copy clean URLs and get rid of URL parameters
     var selection = document.getSelection()
 
     console.log("title: " + title)
