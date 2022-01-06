@@ -4,7 +4,7 @@
 
 chrome.action.onClicked.addListener(async (tab) => {
     chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['lib/jquery.js']}); //https://code.jquery.com/jquery-3.5.1.min.js
-    
+
     // defaulting to `[{title}]({url})` and FALSE respectively
     var defaultClippingOptions = {
         obsidianNoteFormat: "[{title}]({url})",
@@ -27,7 +27,7 @@ chrome.action.onClicked.addListener(async (tab) => {
                         console.log('Writing to clipboard', err);
                     })
 
-                //write directly into the obsidian file
+                //write directly into the obsidian file: https://developer.chrome.com/docs/apps/app_storage/
                     //file path == if file exsits return path, otherwise create a new file and return path to a new file
                     //write note into the file
             }
@@ -65,7 +65,26 @@ function formatNote(clippingOptions){
 
 //Using navigator clipboard API: https://developer.mozilla.org/en-US/docs/Web/API/Clipboard/writeText 
 function copyToClipboard(note) {
-    navigator.clipboard.writeText(note)
+    //navigator.clipboard api requires HTTPs. Doesn't work in case of plain HTTP
+    if(window.isSecureContext)
+        navigator.clipboard.writeText(note)
+    else //workaround for HTTP request
+    {
+        // text area method
+        let textArea = document.createElement("textarea");
+        textArea.value = note;
+        // make the textarea out of viewport
+        textArea.style.position = "fixed";
+        textArea.style.left = "-999999px";
+        textArea.style.top = "-999999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        return new Promise((res, rej) => {
+            document.execCommand('copy') ? res() : rej();
+            textArea.remove();
+        });
+    }
 }
 
 // Get the obsidianNoteFormat and selectionIntoDescription from storage; 
