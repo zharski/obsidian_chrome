@@ -7,8 +7,8 @@ chrome.action.onClicked.addListener(async (tab) => {
 
     // defaulting to `[{title}]({url})` and FALSE respectively
     var defaultClippingOptions = {
-        obsidianNoteFormat: "[{title}]({url})",
-        selectionIntoDescription: false,
+        obsidianNoteFormat: "| [{title}]({url}) | |",
+        addIntoObisidianFile: false,
     }
 
     //extracting options from storage
@@ -28,8 +28,8 @@ chrome.action.onClicked.addListener(async (tab) => {
                     })
 
                 //write directly into the obsidian file: https://developer.chrome.com/docs/apps/app_storage/
-                    //file path == if file exsits return path, otherwise create a new file and return path to a new file
-                    //write note into the file
+                //file path == if file exsits return path, otherwise create a new file and return path to a new file
+                //write note into the file
             }
         });
 });
@@ -87,7 +87,7 @@ function copyToClipboard(note) {
     }
 }
 
-// Get the obsidianNoteFormat and selectionIntoDescription from storage; 
+// Get values from storage; 
 async function getFromStorage(key) {
     return new Promise((resolve, reject) => {
         chrome.storage.sync.get(key, resolve);
