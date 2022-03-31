@@ -46,7 +46,7 @@ function sendNotification(message){
 }
 
 function formatNote(clippingOptions){
-    var title = document.title.replace(/\//g, '')
+    var title = document.title.replace(/\//g, '').replace('|', '-') //cleaning the description. Need to replace '|' to avoid conflict with *.md markdown 
     var url = window.location.origin + window.location.pathname //workaround allows to copy clean URLs and get rid of URL parameters
     var selection = document.getSelection()
 
