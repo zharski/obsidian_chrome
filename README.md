@@ -1,4 +1,4 @@
-A Google Chrome extension which helps to put daily notes (URLs, page clips) into Obisidian.md
+Google Chrome extension which helps to generate snippets (URLs, page clips) in .md format.
 
 ___work in progress...___
 
