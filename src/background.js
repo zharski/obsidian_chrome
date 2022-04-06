@@ -27,6 +27,7 @@ chrome.action.onClicked.addListener(async (tab) => {
                         console.log('Writing to clipboard', err);
                     })
 
+                //TODO:
                 //write directly into the obsidian file: https://developer.chrome.com/docs/apps/app_storage/
                 //file path == if file exsits return path, otherwise create a new file and return path to a new file
                 //write note into the file
@@ -45,14 +46,10 @@ function sendNotification(message){
     chrome.notifications.create('obsidian', opt);
 }
 
-function formatNote(clippingOptions){
+function formatNote(clippingOptions){ 
     var title = document.title.replace(/\//g, '').replace('|', '-') //cleaning the description. Need to replace '|' to avoid conflict with *.md markdown 
-    var url = window.location.origin + window.location.pathname //workaround allows to copy clean URLs and get rid of URL parameters
+    var url = extractUrl()
     var selection = document.getSelection()
-
-    console.log("title: " + title)
-    console.log("url: " + url)
-    console.log("selection: " + selection)
 
     // Replace the placeholders: (with regex so multiples are replaced as well..)
     var note = clippingOptions.obsidianNoteFormat
@@ -60,7 +57,21 @@ function formatNote(clippingOptions){
     note = note.replace(/{url}/g, url)
     note = note.replace(/{title}/g, title)
 
-    return note
+    return note;
+
+    //extract url. to be moved into separate script file and injected in manifest.json
+    function extractUrl(){
+        const youtubeRegExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#\&\?]*).*/; //Regex to  extract video_id from Yotube URLs
+
+        // Regexp to extract video id from Youtube pages
+        var match = window.location.href.match(youtubeRegExp);
+
+        if (match && match[7].length == 11){ //we have a valid youtube URL 
+            return window.location.href
+        }
+
+        return window.location.origin + window.location.pathname; // allows to copy clean URLs and get rid of URL parameters
+    }
 }
 
 //Using navigator clipboard API: https://developer.mozilla.org/en-US/docs/Web/API/Clipboard/writeText 
