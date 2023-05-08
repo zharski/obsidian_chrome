@@ -47,7 +47,7 @@ function sendNotification(message){
 }
 
 function formatNote(clippingOptions){ 
-    var title = document.title.replace(/\//g, '').replace('|', '-') //cleaning the description. Need to replace '|' to avoid conflict with *.md markdown 
+    var title = document.title.replace(/\//g, '').replace(/\|/g, '-')//cleaning the description. Need to replace '|' to avoid conflict with *.md markdown 
     var url = extractUrl()
     var selection = document.getSelection()
 
