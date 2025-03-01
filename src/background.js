@@ -1,49 +1,63 @@
+// Add constants at the top
+const NOTIFICATION_ID = 'obsidian';
+const YOUTUBE_REGEX = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#\&\?]*).*/;
+const DEFAULT_CLIPPING_OPTIONS = {
+    obsidianNoteFormat: "| [{title}]({url}) | |",
+    addIntoObisidianFile: false,
+};
+
 // This runs in the background.. waiting for the icon to be clicked.. 
 // It then loads the libraries required and runs the script.
 // The script copies the content and adds it to your clipboard
 
 chrome.action.onClicked.addListener(async (tab) => {
-    chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['lib/jquery.js']}); //https://code.jquery.com/jquery-3.5.1.min.js
-
-    // defaulting to `[{title}]({url})` and FALSE respectively
-    var defaultClippingOptions = {
-        obsidianNoteFormat: "| [{title}]({url}) | |",
-        addIntoObisidianFile: false,
-    }
-
-    //extracting options from storage
-    var clippingOptions = await getFromStorage(defaultClippingOptions)
-
-    await chrome.scripting.executeScript({ target: { tabId: tab.id }, function:formatNote, args: [clippingOptions]},
-        (injectionResults) => {
-            if (injectionResults[0].result) {
-                //Obsidian Note is formated in result of formatNote() function execution
-                var note = injectionResults[0].result
-
-                // Copying to clipboard and sending notification to a user
-                chrome.scripting.executeScript({ target: { tabId: tab.id }, function:copyToClipboard, args: [note]})
-                    .then(sendNotification('Your note has been copied!'))
-                    .catch(err => {
-                        console.log('Writing to clipboard', err);
-                    })
-
-                //TODO:
-                //write directly into the obsidian file: https://developer.chrome.com/docs/apps/app_storage/
-                //file path == if file exsits return path, otherwise create a new file and return path to a new file
-                //write note into the file
-            }
+    try {
+        await chrome.scripting.executeScript({ 
+            target: { tabId: tab.id }, 
+            files: ['lib/jquery.js']
         });
+
+        const clippingOptions = await getFromStorage(DEFAULT_CLIPPING_OPTIONS);
+
+        const injectionResult = await chrome.scripting.executeScript({ 
+            target: { tabId: tab.id }, 
+            function: formatNote, 
+            args: [clippingOptions]
+        });
+
+        if (injectionResult?.[0]?.result) {
+            const note = injectionResult[0].result;
+            await chrome.scripting.executeScript({ 
+                target: { tabId: tab.id }, 
+                function: copyToClipboard, 
+                args: [note]
+            });
+            await sendNotification('Your note has been copied!');
+        }
+    } catch (error) {
+        console.error('Error in extension operation:', error);
+        await sendNotification('Failed to copy note. Please try again.');
+    }
 });
 
-function sendNotification(message){
-    var opt = {
+function sendNotification(message) {
+    const opt = {
         type: 'basic',
         title: 'Obsidian',
         message: message,
         priority: 1,
-        iconUrl:'icons/favicon-128x128.png'
+        iconUrl: 'icons/favicon-128x128.png'
     };
-    chrome.notifications.create('obsidian', opt);
+    
+    return new Promise((resolve, reject) => {
+        chrome.notifications.create(NOTIFICATION_ID, opt, () => {
+            if (chrome.runtime.lastError) {
+                reject(chrome.runtime.lastError);
+            } else {
+                resolve();
+            }
+        });
+    });
 }
 
 function formatNote(clippingOptions){ 
@@ -75,26 +89,35 @@ function formatNote(clippingOptions){
 }
 
 //Using navigator clipboard API: https://developer.mozilla.org/en-US/docs/Web/API/Clipboard/writeText 
-function copyToClipboard(note) {
-    //navigator.clipboard api requires HTTPs. Doesn't work in case of plain HTTP
-    if(window.isSecureContext)
-        navigator.clipboard.writeText(note)
-    else //workaround for HTTP request
-    {
-        // text area method
-        let textArea = document.createElement("textarea");
-        textArea.value = note;
-        // make the textarea out of viewport
-        textArea.style.position = "fixed";
-        textArea.style.left = "-999999px";
-        textArea.style.top = "-999999px";
+async function copyToClipboard(note) {
+    if (window.isSecureContext) {
+        try {
+            await navigator.clipboard.writeText(note);
+            return true;
+        } catch (error) {
+            console.error('Clipboard API failed:', error);
+            return fallbackCopy(note);
+        }
+    }
+    return fallbackCopy(note);
+}
+
+function fallbackCopy(text) {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.cssText = 'position: fixed; left: -999999px; top: -999999px';
+    
+    try {
         document.body.appendChild(textArea);
         textArea.focus();
         textArea.select();
-        return new Promise((res, rej) => {
-            document.execCommand('copy') ? res() : rej();
-            textArea.remove();
-        });
+        const success = document.execCommand('copy');
+        textArea.remove();
+        return success;
+    } catch (error) {
+        console.error('Fallback copy failed:', error);
+        textArea.remove();
+        throw error;
     }
 }
 
