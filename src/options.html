@@ -4,6 +4,18 @@
         <title>Obsidian</title>
         <meta charset="UTF-8">
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+        <style>
+            .file-settings-section {
+                background-color: #f9f9f9;
+                padding: 15px;
+                border-radius: 5px;
+                margin-top: 10px;
+            }
+            .filename-preview {
+                font-family: monospace;
+                color: #337ab7;
+            }
+        </style>
     </head>
     <body>
 
@@ -12,44 +24,78 @@
             <hr>
             <form>
                 <div class="form-group row">
-                    <label for="note_format" class="col-sm-2 col-form-label">Obsidian format:</label>
+                    <label for="note_format" class="col-sm-2 col-form-label">Note format:</label>
                     <div class="col-sm-8">
                         <textarea class="form-control" id="note_format" name="note_format" type="text">| [{title}]({url}) | |</textarea>
-                        <small class="form-text text-muted">Placeholders: {clip}, {title}, {url} </small>
+                        <small class="form-text text-muted">Placeholders: {clip}, {title}, {url}</small>
                     </div>
                 </div>
+
                 <div class="form-group row">
                     <div class="col-sm-2 col-form-label">
-                        <label class="form-check-label" for="add_into_obsidian_file">
-                                Insert into obisidian file?
+                        <label class="form-check-label" for="add_into_file">
+                            Write directly to file?
                         </label>
                     </div>
                     <div class="col-sm-8">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="add_into_file" name="add_into_file">
+                            <small class="form-text text-muted">If unchecked, notes will be copied to clipboard instead</small>
                         </div>
                     </div>
                 </div>
-                <div class="form-group row">
-                    <label for="obsidian_vault" class="col-sm-2 col-form-label">Obsidian Vault:</label>
-                    <div class="col-sm-8">
-                        <div class="input-group">
-                            <input class="form-control" id="vault_name" name="vault_name" type="text" />
-                            <span class="input-group-btn">
-                                <button class="btn btn-default" type="button" id="browse_vaults">Browse</button>
-                            </span>
+
+                <div id="file_settings_section" class="file-settings-section" style="display: none;">
+                    <h4>File Settings</h4>
+
+                    <div class="form-group row">
+                        <label for="folder_path" class="col-sm-2 col-form-label">Notes Folder:</label>
+                        <div class="col-sm-8">
+                            <div class="input-group">
+                                <input class="form-control" id="folder_path" type="text" readonly placeholder="No folder selected" />
+                                <span class="input-group-btn">
+                                    <button class="btn btn-primary" type="button" id="select_folder_btn">Select Folder</button>
+                                </span>
+                            </div>
+                            <small class="form-text text-muted">Select the folder where notes will be saved (your Obsidian vault folder)</small>
                         </div>
-                        <small class="form-text text-muted">The name of your Obsidian vault</small>
-                        <div id="vault_list" class="list-group mt-2" style="display: none;"></div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label for="file_prefix" class="col-sm-2 col-form-label">File Prefix:</label>
+                        <div class="col-sm-8">
+                            <input class="form-control" id="file_prefix" name="file_prefix" type="text" value="notes" />
+                            <small class="form-text text-muted">Prefix for generated filenames (e.g., "links", "bookmarks")</small>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label for="file_postfix" class="col-sm-2 col-form-label">File Postfix:</label>
+                        <div class="col-sm-8">
+                            <input class="form-control" id="file_postfix" name="file_postfix" type="text" value="" />
+                            <small class="form-text text-muted">Postfix for generated filenames (before .md extension)</small>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label for="file_pattern" class="col-sm-2 col-form-label">Filename Pattern:</label>
+                        <div class="col-sm-8">
+                            <input class="form-control" id="file_pattern" name="file_pattern" type="text" value="{prefix}-{year}-{month}{postfix}.md" />
+                            <small class="form-text text-muted">
+                                Placeholders: {prefix}, {postfix}, {year}, {month}, {week}, {date}
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label class="col-sm-2 col-form-label">Preview:</label>
+                        <div class="col-sm-8">
+                            <span id="filename_preview" class="form-control-plaintext filename-preview">links-2024-01.md</span>
+                        </div>
                     </div>
                 </div>
-                <div class="form-group row">
-                    <label for="obsidian_file" class="col-sm-2 col-form-label">Target File:</label>
-                    <div class="col-sm-8">
-                        <input class="form-control" id="target_file" name="target_file" type="text" />
-                        <small class="form-text text-muted">Custom file to append content to (leave empty to use monthly notes in YYYY-MM.md format)</small>
-                    </div>
-                </div>
+
+                <hr>
                 <div class="form-group row">
                     <div class="col-sm-2"></div>
                     <div class="col-sm-8">

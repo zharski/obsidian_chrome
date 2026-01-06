@@ -1,6 +1,6 @@
 {
     "name": "Obsidian Plugin",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "manifest_version": 3,
     "description": "Copy page metadata into *.md format for Obsidian",
     "background": {
@@ -19,9 +19,11 @@
         "clipboardWrite",
         "storage",
         "scripting",
-        "notifications"
+        "notifications",
+        "offscreen",
+        "unlimitedStorage"
     ],
-    "icons": { 
+    "icons": {
         "16": "icons/favicon-16x16.png",
         "48": "icons/favicon-48x48.png",
         "32": "icons/favicon-32x32.png",
