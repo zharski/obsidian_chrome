@@ -7,7 +7,7 @@ const DEFAULT_CLIPPING_OPTIONS = {
     noteFormat: "| [{title}]({url}) | |",
     addIntoFile: false,
     fileNamePattern: '{prefix}-{year}-{month}{postfix}.md',
-    filePrefix: 'links',
+    filePrefix: 'notes',
     filePostfix: ''
 };
 
